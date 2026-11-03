@@ -1,12 +1,14 @@
-// 오프라인에서도 앱이 열리도록 앱 파일을 캐시합니다. 파일을 바꾸면 VERSION을 올리세요.
-const VERSION = 'gudo-v2';
+// 네트워크 우선: 온라인이면 항상 최신 파일, 오프라인일 때만 저장된 파일을 사용합니다.
+const VERSION = 'gudo-v3';
 const FILES = [
   './', 'index.html', 'style.css', 'manifest.webmanifest',
   'js/app.js', 'js/filters.js', 'js/guides.js', 'js/store.js',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png',
 ];
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(FILES)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(VERSION)
+    .then((c) => c.addAll(FILES.map((f) => new Request(f, { cache: 'reload' }))))
+    .then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', (e) => {
   e.waitUntil(caches.keys()
@@ -14,6 +16,13 @@ self.addEventListener('activate', (e) => {
     .then(() => self.clients.claim()));
 });
 self.addEventListener('fetch', (e) => {
-  if (e.request.method !== 'GET') return;
-  e.respondWith(caches.match(e.request).then((hit) => hit || fetch(e.request)));
+  if (e.request.method !== 'GET' || new URL(e.request.url).origin !== location.origin) return;
+  e.respondWith(
+    fetch(e.request, { cache: 'no-cache' })
+      .then((res) => {
+        if (res.ok) { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(e.request, copy)); }
+        return res;
+      })
+      .catch(() => caches.match(e.request).then((hit) => hit || caches.match('index.html'))),
+  );
 });
