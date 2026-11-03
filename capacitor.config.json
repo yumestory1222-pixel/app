@@ -1,0 +1,10 @@
+{
+  "appId": "com.gudocamera.app",
+  "appName": "구도 카메라",
+  "webDir": "www",
+  "backgroundColor": "#000000",
+  "android": { "allowMixedContent": false },
+  "plugins": {
+    "Media": { "androidGalleryMode": false }
+  }
+}

@@ -50,15 +50,20 @@ manifest.webmanifest  홈 화면 설치 정보
 사용 가능한 값: `brightness`(밝기), `contrast`(대비), `saturation`(채도), `warmth`(색온도), `tint`(초록↔자주),
 `fade`(물빠짐), `vignette`(비네팅), `grain`(필름 입자), `mono`(흑백), `shadow`/`highlight`(어두운/밝은 부분 색감 RGB)
 
-## 플레이 스토어 출시
+## 앱으로 설치
 
-이 앱은 웹 기술로 만들어져 있어서 아래 방법 중 하나로 안드로이드 앱(.aab)으로 감쌀 수 있습니다.
+### 안드로이드 APK
+`main` 또는 개발 브랜치에 올리면 GitHub Actions(`.github/workflows/android.yml`)가 APK를 빌드해 **Releases**에 올립니다.
 
-1. **TWA (Bubblewrap)** – HTTPS로 배포한 주소를 그대로 앱으로 만듦. 가장 간단.
-2. **Capacitor** – 앱 안에 파일을 넣어 오프라인 동작, 기기 갤러리에 바로 저장하는 등 네이티브 기능 추가가 쉬움.
+- 최신 APK: https://github.com/yumestory1222-pixel/app/releases/latest/download/gudo-camera.apk
+- 설치 앱에서는 "저장"을 누르면 기기 갤러리(GudoCamera 앨범)에 저장되고, "공유"는 안드로이드 공유 메뉴를 엽니다.
+- `android-config/debug.keystore`는 업데이트 설치가 되도록 고정한 **테스트용 서명 키**입니다. 플레이 스토어에 올릴 때는 새 키를 만들어 GitHub Secrets에 넣고 release 빌드로 바꿔야 합니다.
+
+### 홈 화면에 추가 (PWA)
+웹 주소에 접속한 뒤 브라우저 메뉴에서 "홈 화면에 추가" 또는 "앱 설치"를 누르면 됩니다. 아이폰은 사파리 공유 버튼 → "홈 화면에 추가".
 
 ## 알려진 제한
 
-- 브라우저에서는 사진을 휴대폰 갤러리에 직접 넣을 수 없어 "저장"은 다운로드 폴더로, "공유"는 공유 메뉴로 갑니다. (Capacitor로 감싸면 해결)
+- 웹(브라우저)에서는 사진을 휴대폰 갤러리에 직접 넣을 수 없어 "저장"은 다운로드 폴더로 갑니다. APK로 설치하면 갤러리에 저장됩니다.
 - 줌은 디지털 줌입니다.
 - 플래시(라이트)는 기기·브라우저가 지원할 때만 켜집니다. 지원하지 않으면 화면 조명으로 대신합니다.

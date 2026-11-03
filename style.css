@@ -45,7 +45,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   background: #000a; padding: 4px 10px; border-radius: 99px; font-size: 13px; font-weight: 600; }
 #countdown { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   font-size: 120px; font-weight: 200; text-shadow: 0 2px 16px #000; pointer-events: none; }
-#toast { position: absolute; left: 50%; bottom: 52px; transform: translateX(-50%); background: #000c;
+#toast { position: fixed; z-index: 60; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 200px); transform: translateX(-50%); background: #000c;
   padding: 7px 14px; border-radius: 99px; font-size: 13px; white-space: nowrap; pointer-events: none; }
 #flashScreen { position: fixed; inset: 0; background: #fff; z-index: 50; }
 

@@ -351,7 +351,52 @@ function download(p) {
   setTimeout(() => URL.revokeObjectURL(a.href), 4000);
 }
 
+// ---- 설치형 앱(Capacitor)일 때: 기기 갤러리 저장 · 네이티브 공유 ----
+const Cap = window.Capacitor;
+const isNative = !!Cap?.isNativePlatform?.();
+const ALBUM = 'GudoCamera';
+
+function blobToBase64(blob) {
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => res(String(fr.result).split(',')[1]);
+    fr.onerror = () => rej(fr.error);
+    fr.readAsDataURL(blob);
+  });
+}
+
+async function nativeShare(p) {
+  const { Filesystem, Share } = Cap.Plugins;
+  const data = await blobToBase64(p.blob);
+  const { uri } = await Filesystem.writeFile({ path: fileName(p), data, directory: 'CACHE' });
+  await Share.share({ files: [uri] });
+}
+
+async function nativeSave(p) {
+  const { Media } = Cap.Plugins;
+  const opts = { path: `data:image/jpeg;base64,${await blobToBase64(p.blob)}`, fileName: fileName(p).replace(/\.jpg$/, '') };
+  if (Cap.getPlatform() === 'android') {
+    const { path: base } = await Media.getAlbumsPath();
+    const find = async () => (await Media.getAlbums()).albums.find((a) => a.name === ALBUM && a.identifier.startsWith(base));
+    let album = await find();
+    if (!album) { await Media.createAlbum({ name: ALBUM }); album = await find(); }
+    if (!album) throw new Error('album');
+    opts.albumIdentifier = album.identifier;
+  }
+  await Media.savePhoto(opts);
+}
+
+async function save(p) {
+  if (!isNative) return download(p);
+  try { await nativeSave(p); toast('갤러리에 저장했어요'); }
+  catch (e) { console.error(e); toast('저장이 안 돼서 공유 메뉴를 열게요'); share(p); }
+}
+
 async function share(p) {
+  if (isNative) {
+    try { await nativeShare(p); } catch (e) { if (!/cancel/i.test(String(e?.message))) { console.error(e); toast('공유에 실패했어요'); } }
+    return;
+  }
   const file = new File([p.blob], fileName(p), { type: 'image/jpeg' });
   if (navigator.canShare?.({ files: [file] })) {
     try { await navigator.share({ files: [file] }); } catch { /* 취소 */ }
@@ -444,7 +489,7 @@ $('btnGallery').addEventListener('click', openGallery);
 $('btnGalleryClose').addEventListener('click', () => { $('gallery').hidden = true; });
 $('btnViewerClose').addEventListener('click', () => { $('viewer').hidden = true; });
 $('btnShare').addEventListener('click', () => viewing && share(viewing));
-$('btnSave').addEventListener('click', () => viewing && download(viewing));
+$('btnSave').addEventListener('click', () => viewing && save(viewing));
 $('btnDelete').addEventListener('click', async () => {
   if (!viewing || !confirm('이 사진을 삭제할까요?')) return;
   await store.remove(viewing.id);
@@ -473,7 +518,7 @@ startCamera();
 requestAnimationFrame(loop);
 setInterval(updateFilterThumbs, 1000);
 
-if ('serviceWorker' in navigator && location.protocol === 'https:') {
+if ('serviceWorker' in navigator && location.protocol === 'https:' && !isNative) {
   // 새 버전이 설치되면 한 번 자동 새로고침
   const hadController = !!navigator.serviceWorker.controller;
   let reloaded = false;
