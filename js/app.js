@@ -1,5 +1,5 @@
 import { FILTERS, Renderer } from './filters.js';
-import { GUIDES, drawGuide } from './guides.js';
+import { GUIDES, CATEGORIES, drawGuide } from './guides.js';
 import * as store from './store.js';
 
 const $ = (id) => document.getElementById(id);
@@ -20,7 +20,9 @@ const state = {
   ratio: RATIOS[saved.ratio] ? saved.ratio : '3:4',
   filter: saved.filter || 'original',
   intensity: saved.intensity ?? 1,
-  guide: saved.guide || 'thirds',
+  guide: GUIDES.some((g) => g.id === saved.guide) ? saved.guide : 'food-triangle',
+  guideCat: saved.guideCat || 'all',
+  showTip: saved.showTip ?? true,
   guideFlip: saved.guideFlip || 0,
   timer: saved.timer || 0,
   flash: false,
@@ -30,8 +32,8 @@ const state = {
   stream: null,
 };
 function persist() {
-  const { facing, ratio, filter, intensity, guide, guideFlip, timer } = state;
-  try { localStorage.setItem('gudo-settings', JSON.stringify({ facing, ratio, filter, intensity, guide, guideFlip, timer })); } catch { /* 무시 */ }
+  const { facing, ratio, filter, intensity, guide, guideFlip, guideCat, showTip, timer } = state;
+  try { localStorage.setItem('gudo-settings', JSON.stringify({ facing, ratio, filter, intensity, guide, guideFlip, guideCat, showTip, timer })); } catch { /* 무시 */ }
 }
 
 let renderer;
@@ -152,16 +154,17 @@ function buildChips() {
   for (const g of GUIDES) {
     const { b, c } = makeChip(g.name, () => {
       if (state.guide === g.id && g.flippable) {
-        state.guideFlip = (state.guideFlip + 1) % 4;
+        state.guideFlip = g.flippable === 'h' ? state.guideFlip ^ 1 : (state.guideFlip + 1) % 4;
         toast('방향을 바꿨어요');
       } else {
         state.guide = g.id;
         state.guideFlip = 0;
-        if (g.flippable) toast('한 번 더 누르면 방향이 바뀌어요');
+        if (g.flippable && !state.showTip) toast('한 번 더 누르면 방향이 바뀌어요');
       }
-      persist(); renderGuide(); syncChips();
+      persist(); renderGuide(); syncChips(); syncTip();
     });
     b.dataset.id = g.id;
+    b.dataset.cat = g.cat;
     const ctx = c.getContext('2d');
     ctx.fillStyle = '#2a2a30'; ctx.fillRect(0, 0, c.width, c.height);
     const tmp = document.createElement('canvas');
@@ -173,6 +176,20 @@ function buildChips() {
     }
     ctx.drawImage(tmp, 0, 0);
     gWrap.append(b);
+  }
+
+  const cWrap = $('guideCats');
+  for (const cat of CATEGORIES) {
+    const b = document.createElement('button');
+    b.className = 'cat';
+    b.textContent = cat.name;
+    b.dataset.id = cat.id;
+    b.addEventListener('click', () => {
+      state.guideCat = cat.id;
+      persist(); syncChips();
+      $('guideChips').scrollLeft = 0;
+    });
+    cWrap.append(b);
   }
 
   const fWrap = $('filterChips');
@@ -190,12 +207,26 @@ function buildChips() {
 }
 
 function syncChips() {
-  for (const b of $('guideChips').children) b.classList.toggle('active', b.dataset.id === state.guide);
+  for (const b of $('guideCats').children) b.classList.toggle('active', b.dataset.id === state.guideCat);
+  for (const b of $('guideChips').children) {
+    b.classList.toggle('active', b.dataset.id === state.guide);
+    b.hidden = state.guideCat !== 'all' && b.dataset.cat !== state.guideCat && b.dataset.id !== 'none';
+  }
   for (const b of $('filterChips').children) b.classList.toggle('active', b.dataset.id === state.filter);
   const filterTab = !$('filterChips').hidden;
   $('intensityRow').hidden = !filterTab || state.filter === 'original';
   $('intensity').value = Math.round(state.intensity * 100);
   $('intensityVal').textContent = Math.round(state.intensity * 100);
+}
+
+function syncTip() {
+  const g = GUIDES.find((x) => x.id === state.guide);
+  const show = state.showTip && g && g.tip;
+  $('tip').hidden = !show;
+  if (show) {
+    $('tipTitle').textContent = g.title || g.name;
+    $('tipText').textContent = g.tip + (g.flippable ? ' (한 번 더 누르면 방향 전환)' : '');
+  }
 }
 
 function syncTopbar() {
@@ -204,6 +235,7 @@ function syncTopbar() {
   set('btnTimer', state.timer > 0, state.timer ? `${state.timer}초` : '끔');
   set('btnRatio', false, state.ratio);
   set('btnLevel', state.level, '수평');
+  set('btnTip', state.showTip, '설명');
 }
 
 let toastTimer;
@@ -391,10 +423,13 @@ $('btnRatio').addEventListener('click', () => {
   persist(); syncTopbar(); layout();
 });
 $('btnLevel').addEventListener('click', toggleLevel);
+$('btnTip').addEventListener('click', () => { state.showTip = !state.showTip; persist(); syncTopbar(); syncTip(); });
+$('tipClose').addEventListener('click', () => { state.showTip = false; persist(); syncTopbar(); syncTip(); });
 for (const t of document.querySelectorAll('.tab')) {
   t.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach((x) => x.classList.toggle('active', x === t));
     $('guideChips').hidden = t.dataset.tab !== 'guide';
+    $('guideCats').hidden = t.dataset.tab !== 'guide';
     $('filterChips').hidden = t.dataset.tab !== 'filter';
     syncChips();
     updateFilterThumbs();
@@ -431,6 +466,7 @@ document.addEventListener('visibilitychange', () => {
 buildChips();
 syncChips();
 syncTopbar();
+syncTip();
 layout();
 refreshThumb();
 startCamera();

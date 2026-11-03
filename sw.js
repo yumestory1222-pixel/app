@@ -1,5 +1,5 @@
 // 오프라인에서도 앱이 열리도록 앱 파일을 캐시합니다. 파일을 바꾸면 VERSION을 올리세요.
-const VERSION = 'gudo-v1';
+const VERSION = 'gudo-v2';
 const FILES = [
   './', 'index.html', 'style.css', 'manifest.webmanifest',
   'js/app.js', 'js/filters.js', 'js/guides.js', 'js/store.js',
