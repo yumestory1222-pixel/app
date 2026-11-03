@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="구도 가이드와 필터를 보면서 찍는 카메라">
+  <title>구도 카메라</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- 상단 바 -->
+    <header class="topbar">
+      <button id="btnFlash" class="top-btn" aria-label="플래시">
+        <svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>
+        <span class="val">끔</span>
+      </button>
+      <button id="btnTimer" class="top-btn" aria-label="타이머">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>
+        <span class="val">끔</span>
+      </button>
+      <button id="btnRatio" class="top-btn" aria-label="화면 비율">
+        <svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2"/></svg>
+        <span class="val">3:4</span>
+      </button>
+      <button id="btnLevel" class="top-btn" aria-label="수평계">
+        <svg viewBox="0 0 24 24"><path d="M2 12h6m8 0h6"/><circle cx="12" cy="12" r="3"/></svg>
+        <span class="val">수평</span>
+      </button>
+    </header>
+
+    <!-- 미리보기 -->
+    <main id="stage">
+      <div id="viewport">
+        <canvas id="view"></canvas>
+        <canvas id="overlay"></canvas>
+        <div id="level" hidden><div class="level-line"></div><div class="level-ref"></div></div>
+        <div id="zoomBadge" hidden>1.0x</div>
+        <div id="countdown" hidden></div>
+        <div id="toast" hidden></div>
+      </div>
+      <div id="flashScreen" hidden></div>
+      <div id="permission" hidden>
+        <p class="perm-title">카메라 권한이 필요해요</p>
+        <p class="perm-msg" id="permMsg">아래 버튼을 눌러 카메라를 켜 주세요.</p>
+        <button id="btnStart" class="pill">카메라 켜기</button>
+      </div>
+    </main>
+
+    <!-- 하단 패널 -->
+    <footer class="bottom">
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-tab="guide" role="tab">구도</button>
+        <button class="tab" data-tab="filter" role="tab">필터</button>
+      </div>
+      <div id="guideChips" class="chips" data-panel="guide"></div>
+      <div id="filterChips" class="chips" data-panel="filter" hidden></div>
+      <div id="intensityRow" class="slider-row" hidden>
+        <span>강도</span>
+        <input id="intensity" type="range" min="0" max="100" value="100">
+        <output id="intensityVal">100</output>
+      </div>
+      <div class="controls">
+        <button id="btnGallery" class="thumb" aria-label="갤러리"><img id="thumbImg" alt="" hidden></button>
+        <button id="btnShutter" class="shutter" aria-label="촬영"><span></span></button>
+        <button id="btnFlip" class="round" aria-label="카메라 전환">
+          <svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><path d="M9.5 12.5a3 3 0 0 1 5-1.5l1 1m0-2.5V12h-2.5M14.5 14.5a3 3 0 0 1-5 1.5l-1-1m0 2.5V15h2.5"/></svg>
+        </button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- 갤러리 -->
+  <section id="gallery" class="sheet" hidden>
+    <header class="sheet-head">
+      <button id="btnGalleryClose" class="text-btn">닫기</button>
+      <h2>갤러리</h2>
+      <span id="galleryCount" class="muted"></span>
+    </header>
+    <div id="galleryGrid" class="grid"></div>
+    <p id="galleryEmpty" class="empty" hidden>아직 찍은 사진이 없어요.</p>
+  </section>
+
+  <!-- 사진 보기 -->
+  <section id="viewer" class="sheet" hidden>
+    <header class="sheet-head">
+      <button id="btnViewerClose" class="text-btn">뒤로</button>
+      <h2>사진</h2>
+      <span></span>
+    </header>
+    <div class="viewer-body"><img id="viewerImg" alt="찍은 사진"></div>
+    <div class="viewer-actions">
+      <button id="btnShare" class="pill">공유</button>
+      <button id="btnSave" class="pill">저장</button>
+      <button id="btnDelete" class="pill danger">삭제</button>
+    </div>
+  </section>
+
+  <video id="video" playsinline muted autoplay></video>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
